@@ -3,13 +3,16 @@ const fs = require("fs");
 const express = require("express");
 const bodyParser = require("body-parser");
 const sequelize = require("./Util/database");
-
-require("dotenv").config();
-
 const app = express();
 var cors = require("cors");
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://127.0.0.1:5500/",
+  })
+);
+
+require("dotenv").config();
 
 app.use(bodyParser.json({ extended: false }));
 
@@ -19,7 +22,6 @@ const User = require("./Models/User");
 
 app.use("/user", userRoute);
 app.use((req, res) => {
-  console.log(req.url);
   res.sendFile(path.join(__dirname, `Views`, `${req.url}`));
 });
 
