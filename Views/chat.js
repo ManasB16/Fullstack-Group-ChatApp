@@ -27,6 +27,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function refresh() {
+  document.getElementById("chats").innerHTML = "";
   const getChats = await axios.get("http://localhost:4000/chat/getchat");
   getChats.data.allChats.forEach((chat) => {
     showNewChatOnUi(chat);
@@ -38,3 +39,5 @@ async function showNewChatOnUi(chat) {
   const childElement = `<li>${chat.name}-${chat.message}</li>`;
   parentNode.innerHTML += childElement;
 }
+
+// setInterval(refresh, 1000);
