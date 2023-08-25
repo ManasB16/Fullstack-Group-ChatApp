@@ -40,4 +40,4 @@ async function showNewChatOnUi(chat) {
   parentNode.innerHTML += childElement;
 }
 
-// setInterval(refresh, 1000);
+setInterval(refresh, 1000);
