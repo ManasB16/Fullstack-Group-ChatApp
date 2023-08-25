@@ -18,6 +18,8 @@ const postChat = async (req, res, next) => {
 
 const getChat = async (req, res, next) => {
   try {
+    const allChats = await Chat.findAll();
+    res.status(200).json({ allChats });
   } catch (err) {
     res.status(500).json({
       error: err,

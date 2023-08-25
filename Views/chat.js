@@ -21,3 +21,20 @@ async function onSend(e) {
     document.body.innerHTML += `<p>${err}</p>`;
   }
 }
+
+window.addEventListener("DOMContentLoaded", async () => {
+  refresh();
+});
+
+async function refresh() {
+  const getChats = await axios.get("http://localhost:4000/chat/getchat");
+  getChats.data.allChats.forEach((chat) => {
+    showNewChatOnUi(chat);
+  });
+}
+
+async function showNewChatOnUi(chat) {
+  const parentNode = document.getElementById("chats");
+  const childElement = `<li>${chat.name}-${chat.message}</li>`;
+  parentNode.innerHTML += childElement;
+}

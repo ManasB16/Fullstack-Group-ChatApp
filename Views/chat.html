@@ -33,16 +33,17 @@
             <ul id="chats" class="list-unstyled"></ul>
           </div>
           <div class="sticky-bottom">
-            <input
-              type="text"
-              class="form-control"
-              name="message"
-              placeholder="Message"
-            />
-            <br />
-            <button type="submit" class="btn btn-outline-success">
-              Send Message
-            </button>
+            <form onsubmit="onSend(event)">
+              <input
+                type="text"
+                id="msg"
+                class="form-control"
+                name="message"
+                placeholder="Message"
+              />
+              <br />
+              <button class="btn btn-outline-success">Send Message</button>
+            </form>
           </div>
         </div>
       </div>
