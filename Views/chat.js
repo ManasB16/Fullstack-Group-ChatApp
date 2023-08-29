@@ -104,4 +104,4 @@ async function showNewChatOnUi(chat) {
   }
 }
 
-// setInterval(refresh, 1000);
+setInterval(refresh, 1000);
