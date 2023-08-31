@@ -5,8 +5,12 @@ const middleware = require("../Middleware/auth");
 
 const router = express.Router();
 
-router.post("/postchat", middleware.Authenticate, chatController.postChat);
+router
+  .route("/postchat")
+  .post(middleware.Authenticate, chatController.postChat);
 
-router.get("/getchat", chatController.getChat);
+router
+  .route("/getchat/:grpId")
+  .get(middleware.Authenticate, chatController.getChat);
 
 module.exports = router;
