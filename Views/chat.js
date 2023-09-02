@@ -1,4 +1,14 @@
+const socket = io("http://localhost:4000");
 const token = localStorage.getItem("token");
+
+socket.on("message", (msg, userName, groupId) => {
+  let gId = localStorage.getItem("currentGroupId");
+  if (groupId === gId) {
+    let newP = document.createElement("p");
+    newP.innerText = `${userName}: ${msg}`;
+    document.getElementById("chats").appendChild(newP);
+  }
+});
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -27,15 +37,20 @@ async function onSend(e) {
   try {
     e.preventDefault();
     let GroupId = localStorage.getItem("currentGroupId");
+    let msg = e.target.message.value;
     const data = {
-      message: e.target.message.value,
+      message: msg,
       groupid: GroupId,
     };
 
     const postchat = await axios.post("http://localhost:4000/postchat", data, {
       headers: { Authorization: token },
     });
-    alert("Chat Sent");
+    const grpMsg = postchat.data.newChat;
+    const msgElement = document.createElement("p");
+    msgElement.innerText = `You: ${grpMsg.message}`;
+    document.getElementById("chats").appendChild(msgElement);
+    socket.emit("message", msg, grpMsg.name, GroupId);
     document.getElementById("msg").value = "";
   } catch (err) {
     document.body.innerHTML += `<p>${err}</p>`;
@@ -112,6 +127,7 @@ async function displayGroupsLeft() {
       let li = document.createElement("li");
       li.setAttribute("groupId", grp.id);
       li.setAttribute("createdBy", grp.createdBy);
+      li.setAttribute("groupName", grp.name);
       // if(grp.id == userId) console.log(true)
       li.innerHTML = `<b>${grp.name}</b>`;
 
@@ -159,8 +175,12 @@ async function displayGroupsLeft() {
 async function groupchatpage(e) {
   e.preventDefault();
   const grpId = e.target.parentElement.getAttribute("groupId");
-  document.querySelector("#chatContainer").style.visibility = "visible";
+  document.querySelector("#visib").style.visibility = "visible";
+  document.querySelector("#grpName").style.visibility = "visible";
   localStorage.setItem("currentGroupId", grpId);
+  const grpName = e.target.parentElement.getAttribute("groupName");
+  document.getElementById("grpName").innerHTML = "";
+  document.getElementById("grpName").innerText = grpName;
   refresh(grpId);
 }
 

@@ -15,6 +15,7 @@
       integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
       crossorigin="anonymous"
     ></script>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/dist/socket.io.min.js"></script>
   </head>
   <body
     style="
@@ -36,10 +37,16 @@
             <div id="groups"></div>
           </div>
         </div>
-        <div class="col" style="visibility: hidden" id="chatContainer">
+        <div class="col" id="chatContainer">
           <h1 class="mb-5 text-center">Chats</h1>
+          <h3 id="grpName" style="visibility: hidden"></h3>
           <br />
-          <div class="overflow-auto" style="max-height: 300px">
+          <div
+            class="overflow-auto"
+            style="max-height: 300px"
+            style="visibility: hidden"
+            id="visib"
+          >
             <ul id="chats" class="list-unstyled"></ul>
           </div>
           <div class="sticky-bottom">

@@ -1,20 +1,25 @@
+require("dotenv").config();
 const path = require("path");
-const fs = require("fs");
 const express = require("express");
 const bodyParser = require("body-parser");
 const sequelize = require("./Util/database");
-const app = express();
 var cors = require("cors");
+const app = express();
+const http = require("http").Server(app);
+const io = require("socket.io")(http, { cors: { origin: "*" } });
+
+io.on("connection", (socket) => {
+  socket.on("message", (msg, userName, groupId) => {
+    socket.broadcast.emit("message", msg, userName, groupId);
+  });
+});
 
 app.use(
   cors({
-    origin: "http://127.0.0.1:5500/",
+    origin: "*",
   })
 );
-
-require("dotenv").config();
-
-app.use(bodyParser.json({ extended: false }));
+app.use(express.json());
 
 const userRoute = require("./Routes/user");
 const passwordRoute = require("./Routes/password");
@@ -50,6 +55,6 @@ User.belongsToMany(Group, { through: UserGroup });
 sequelize
   .sync({ force: false })
   .then((result) => {
-    app.listen(4000);
+    http.listen(4000);
   })
   .catch((err) => console.log(err));
