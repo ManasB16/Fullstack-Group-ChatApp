@@ -1,7 +1,6 @@
 require("dotenv").config();
 const path = require("path");
 const express = require("express");
-const bodyParser = require("body-parser");
 const sequelize = require("./Util/database");
 var cors = require("cors");
 const app = express();
@@ -11,6 +10,9 @@ const io = require("socket.io")(http, { cors: { origin: "*" } });
 io.on("connection", (socket) => {
   socket.on("message", (msg, userName, groupId) => {
     socket.broadcast.emit("message", msg, userName, groupId);
+  });
+  socket.on("file", (msg, userName, groupId) => {
+    socket.broadcast.emit("file", msg, userName, groupId);
   });
 });
 
@@ -32,8 +34,8 @@ const Chats = require("./Models/Chat");
 const Group = require("./Models/Group");
 const UserGroup = require("./Models/UserGroup");
 
-app.use("/user", userRoute);
-app.use("/password", passwordRoute);
+app.use(userRoute);
+app.use(passwordRoute);
 app.use(chatsRoute);
 app.use(groupRoute);
 app.use((req, res) => {

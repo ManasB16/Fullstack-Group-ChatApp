@@ -2,11 +2,25 @@ const socket = io("http://localhost:4000");
 const token = localStorage.getItem("token");
 
 socket.on("message", (msg, userName, groupId) => {
-  let gId = localStorage.getItem("currentGroupId");
-  if (groupId === gId) {
-    let newP = document.createElement("p");
-    newP.innerText = `${userName}: ${msg}`;
-    document.getElementById("chats").appendChild(newP);
+  const grpId = localStorage.getItem("currentGroupId");
+  if (grpId) {
+    if (groupId === grpId) {
+      let newP = document.createElement("p");
+      newP.innerText = `${userName}: ${msg}`;
+      document.getElementById("chats").appendChild(newP);
+    }
+  }
+});
+
+socket.on("file", (msg, userName, groupId) => {
+  const grpId = localStorage.getItem("currentGroupId");
+  if (grpId) {
+    if (groupId == grpId) {
+      let parentnode = document.getElementById("chats");
+
+      const childElement = `${userName}: <a href="${msg}">${msg}</a><br />`;
+      parentnode.innerHTML += childElement;
+    }
   }
 });
 
@@ -36,22 +50,47 @@ function parseJwt(token) {
 async function onSend(e) {
   try {
     e.preventDefault();
-    let GroupId = localStorage.getItem("currentGroupId");
-    let msg = e.target.message.value;
-    const data = {
-      message: msg,
-      groupid: GroupId,
-    };
+    if (document.querySelector("#fileBtn").files[0]) {
+      const grpId = localStorage.getItem("currentGroupId");
+      let file = document.querySelector("#fileBtn").files[0];
+      let formData = new FormData();
+      formData.append("file", file);
+      let res = await axios.post(
+        `http://localhost:4000/upload/${grpId}`,
+        formData,
+        {
+          headers: { Authorization: token },
+          "Content-Type": "multipart/form-data",
+        }
+      );
+      const createdFile = res.data.newFile;
+      socket.emit(
+        "file",
+        createdFile.message,
+        createdFile.name,
+        createdFile.groupId
+      );
+      showNewChatOnUi(createdFile);
+    } else {
+      let msg = e.target.message.value;
+      const grpId = localStorage.getItem("currentGroupId");
+      const data = {
+        message: msg,
+        groupid: grpId,
+      };
 
-    const postchat = await axios.post("http://localhost:4000/postchat", data, {
-      headers: { Authorization: token },
-    });
-    const grpMsg = postchat.data.newChat;
-    const msgElement = document.createElement("p");
-    msgElement.innerText = `You: ${grpMsg.message}`;
-    document.getElementById("chats").appendChild(msgElement);
-    socket.emit("message", msg, grpMsg.name, GroupId);
-    document.getElementById("msg").value = "";
+      const postchat = await axios.post(
+        "http://localhost:4000/postchat",
+        data,
+        {
+          headers: { Authorization: token },
+        }
+      );
+      const grpMsg = postchat.data.newChat;
+      showNewChatOnUi(grpMsg);
+      socket.emit("message", msg, grpMsg.name, grpId);
+      document.getElementById("msg").value = "";
+    }
   } catch (err) {
     document.body.innerHTML += `<p>${err}</p>`;
   }
@@ -76,12 +115,22 @@ async function showNewChatOnUi(chat) {
   try {
     let currUser = parseJwt(token);
     const parentNode = document.getElementById("chats");
-    if (chat.userId == currUser.userId) {
-      const childElement = `<p>You: ${chat.message}</p>`;
-      parentNode.innerHTML += childElement;
+    if (chat.datatype === "text") {
+      if (chat.userId == currUser.userId) {
+        const childElement = `<p>You: ${chat.message}</p>`;
+        parentNode.innerHTML += childElement;
+      } else {
+        const childElement = `<p>${chat.name}: ${chat.message}</p>`;
+        parentNode.innerHTML += childElement;
+      }
     } else {
-      const childElement = `<p>${chat.name}: ${chat.message}</p>`;
-      parentNode.innerHTML += childElement;
+      if (chat.userId == currUser.userId) {
+        const childElement = `You: <a href="${chat.message}">${chat.message}</a><br/>`;
+        parentNode.innerHTML += childElement;
+      } else {
+        const childElement = `${chat.name}: <a href="${chat.message}">${chat.message}</a><br/>`;
+        parentNode.innerHTML += childElement;
+      }
     }
   } catch (err) {
     document.body.innerHTML += `<p>${err}</p>`;
@@ -93,7 +142,7 @@ async function createNewGroup() {
     const groupName = prompt("Enter New Group Name");
     if (groupName != null) {
       let createdGroup = await axios.post(
-        "http://localhost:4000/group/createGroup",
+        "http://localhost:4000/createGroup",
         { groupName },
         {
           headers: { Authorization: token },
@@ -108,7 +157,7 @@ async function createNewGroup() {
 
 async function getAllGroups() {
   try {
-    let allGroups = await axios.get("http://localhost:4000/group/getGroups", {
+    let allGroups = await axios.get("http://localhost:4000/getGroups", {
       headers: { Authorization: token },
     });
     return allGroups.data.groups;
@@ -119,7 +168,7 @@ async function getAllGroups() {
 
 async function displayGroupsLeft() {
   try {
-    let userId = parseJwt(localStorage.getItem("token")).userId;
+    let userId = parseJwt(token).userId;
     let groups = await getAllGroups();
     let ul = document.createElement("ul");
     ul.className = "list-unstyled";
@@ -128,7 +177,6 @@ async function displayGroupsLeft() {
       li.setAttribute("groupId", grp.id);
       li.setAttribute("createdBy", grp.createdBy);
       li.setAttribute("groupName", grp.name);
-      // if(grp.id == userId) console.log(true)
       li.innerHTML = `<b>${grp.name}</b>`;
 
       if (grp.createdBy === userId) {
@@ -174,14 +222,14 @@ async function displayGroupsLeft() {
 
 async function groupchatpage(e) {
   e.preventDefault();
-  const grpId = e.target.parentElement.getAttribute("groupId");
+  const GroupId = e.target.parentElement.getAttribute("groupId");
   document.querySelector("#visib").style.visibility = "visible";
   document.querySelector("#grpName").style.visibility = "visible";
-  localStorage.setItem("currentGroupId", grpId);
+  localStorage.setItem("currentGroupId", GroupId);
   const grpName = e.target.parentElement.getAttribute("groupName");
   document.getElementById("grpName").innerHTML = "";
   document.getElementById("grpName").innerText = grpName;
-  refresh(grpId);
+  refresh(GroupId);
 }
 
 async function addMembers(e) {
@@ -194,13 +242,10 @@ async function addMembers(e) {
       email,
     };
     if (email) {
-      const res = await axios.post(
-        "http://localhost:4000/group/addmembers",
-        data,
-        {
-          headers: { Authorization: token },
-        }
-      );
+      const res = await axios.post("http://localhost:4000/addmembers", data, {
+        headers: { Authorization: token },
+      });
+      alert(res.data.msg);
     } else alert("No such member exists");
   } catch (err) {
     document.body.innerHTML += `<p>${err}</p>`;
@@ -217,13 +262,10 @@ async function RemoveMember(e) {
       email,
     };
     if (email) {
-      const res = await axios.post(
-        "http://localhost:4000/group/removemember",
-        data,
-        {
-          headers: { Authorization: token },
-        }
-      );
+      const res = await axios.post("http://localhost:4000/removemember", data, {
+        headers: { Authorization: token },
+      });
+      alert(res.data.msg);
     } else alert("No such member exists");
   } catch (err) {
     document.body.innerHTML += `<p>${err}</p>`;
@@ -242,13 +284,10 @@ async function changeAdmin(e) {
       email,
     };
     if (email) {
-      const res = await axios.patch(
-        "http://localhost:4000/group/changeadmin",
-        data,
-        {
-          headers: { Authorization: token },
-        }
-      );
+      const res = await axios.patch("http://localhost:4000/changeadmin", data, {
+        headers: { Authorization: token },
+      });
+      alert(res.data.msg);
       displayGroupsLeft();
     } else alert("No such member exists");
   } catch (err) {
@@ -260,11 +299,14 @@ async function removeGroup(e) {
   try {
     e.preventDefault();
     let groupid = e.target.parentElement.getAttribute("groupId");
-    let res = await axios.delete(
-      `http://localhost:4000/group/deletegroup/${groupid}`,
-      { headers: { Authorization: token } }
-    );
-    displayGroupsLeft();
+    if (groupid) {
+      let res = await axios.delete(
+        `http://localhost:4000/deletegroup/${groupid}`,
+        { headers: { Authorization: token } }
+      );
+      alert(res.data.msg);
+      displayGroupsLeft();
+    }
   } catch (err) {
     document.body.innerHTML += `<p>${err}</p>`;
   }

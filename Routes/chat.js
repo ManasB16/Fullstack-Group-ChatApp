@@ -1,16 +1,18 @@
 const express = require("express");
-
-const chatController = require("../Controllers/chat");
-const middleware = require("../Middleware/auth");
-
+const multer = require("multer");
 const router = express.Router();
+const upload = multer();
+
+const { postChat, getChat, uploadFile } = require("../Controllers/chat");
+
+const { Authenticate } = require("../Middleware/auth");
+
+router.route("/postchat").post(Authenticate, postChat);
+
+router.route("/getchat/:grpId").get(Authenticate, getChat);
 
 router
-  .route("/postchat")
-  .post(middleware.Authenticate, chatController.postChat);
-
-router
-  .route("/getchat/:grpId")
-  .get(middleware.Authenticate, chatController.getChat);
+  .route("/upload/:groupId")
+  .post(Authenticate, upload.single("file"), uploadFile);
 
 module.exports = router;

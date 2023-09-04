@@ -37,7 +37,7 @@
             <div id="groups"></div>
           </div>
         </div>
-        <div class="col" id="chatContainer">
+        <div class="col">
           <h1 class="mb-5 text-center">Chats</h1>
           <h3 id="grpName" style="visibility: hidden"></h3>
           <br />
@@ -50,14 +50,19 @@
             <ul id="chats" class="list-unstyled"></ul>
           </div>
           <div class="sticky-bottom">
-            <form onsubmit="onSend(event)">
+            <form onsubmit="onSend(event)" enctype="multipart/form-data">
               <input
                 type="text"
                 id="msg"
                 class="form-control"
                 name="message"
                 placeholder="Message"
-                required
+              />
+              <input
+                type="file"
+                name="file"
+                class="form-control"
+                id="fileBtn"
               />
               <br />
               <button class="btn btn-outline-success">Send Message</button>
